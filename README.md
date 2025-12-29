@@ -1,5 +1,4 @@
 # physics-engine
-Physics engine made in c++. Supposedly. If the project is, in fact, ever made.
 ---
 # Style Guide
 There are some small conventions in place for contributing code to this project. Namely:
