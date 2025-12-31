@@ -86,5 +86,3 @@ using std::cout, std::cin, std::string, std::max, std::min;
 
 ## Header files
 Function, classes and variable definitions should be written in `.hpp` header files. Their actual implementations should be written in a separate `.cpp` file, those of which should be put in distinct directories. If it is shown that C++20's modules provide a good enough substitution, we may transition into using `export` and `import`
-
-
