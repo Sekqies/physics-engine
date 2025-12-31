@@ -45,10 +45,20 @@ const char* fragmentShaderSource = R"(
 out vec4 FragColor;
 
 void main(){
-	FragColor = vec4(1.0f,0.5f,0.25f,1.0f);
+	FragColor = vec4(1.0f,0.5f,0.25f,0.5f);
 }
 )";
 
+const char* fragmentShaderSource2 = R"(
+#version 330 core
+out vec4 FragColor;
+
+void main(){
+	FragColor = vec4(0.5f,1.0f,0.25f,0.5f);
+}
+)";
+
+const char* fragmentShaderSources[] = { fragmentShaderSource, fragmentShaderSource2 };
 int main()
 {
 	glfwInit();
@@ -76,47 +86,70 @@ int main()
 	glCompileShader(vertexShader);
 	see_compilation_result(vertexShader);
 
-	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-	see_compilation_result(fragmentShader);
 
-	unsigned int shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
+	unsigned int fragmentShaders[2];
+	for (unsigned int i = 0; i < 2; ++i) {
+		fragmentShaders[i] = glCreateShader(GL_FRAGMENT_SHADER);
+		cout << &fragmentShaderSources[i];
+		glShaderSource(fragmentShaders[i], 1, &fragmentShaderSources[i],NULL);
+		glCompileShader(fragmentShaders[i]);
+		see_compilation_result(fragmentShaders[i]);
+	}
+	unsigned int shaderPrograms[2];
+	for (unsigned int i = 0; i < 2; ++i) {
+		shaderPrograms[i] = glCreateProgram();
+		glAttachShader(shaderPrograms[i], vertexShader);
+		glAttachShader(shaderPrograms[i], fragmentShaders[i]);
+		glLinkProgram(shaderPrograms[i]);
+	}
 
 	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	float vertices[] = {
+	for (unsigned int i = 0; i < 2; ++i) {
+		glDeleteShader(fragmentShaders[i]);
+	}
+	float vertices[9] = {
 	-0.5f,-0.5f,0.0f,
 	0.5f,-0.5f,0.0f,
 	0.0f,0.5f,0.0f,
 	};
 
+	float vertices2[9] = {
+	0.5f,0.5f,0.0f,
+	-0.5f,0.5f,0.0f,
+	0.0f,-0.5f,0.0f,
+	};
 
-	unsigned int VAO,VBO;
-	glGenBuffers(1, &VBO);
-	glGenVertexArrays(1, &VAO);
+	float vertices_array[2][9] = {
+	{-0.5f,-0.5f,0.0f,
+	0.5f,-0.5f,0.0f,
+	0.0f,0.5f,0.0f},
+	{0.5f,0.5f,0.0f,
+	-0.5f,0.5f,0.0f,
+	0.0f,-0.5f,0.0f}
+	};
 
-	glBindVertexArray(VAO);	
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
-	glEnableVertexAttribArray(0);
-
+	unsigned int VAO_array[2];
+	unsigned int VBO_array[2];
+	glGenVertexArrays(2, VAO_array);
+	glGenBuffers(2, VBO_array);
+	for (unsigned int i = 0; i < 2; ++i) {
+		glBindVertexArray(VAO_array[i]);
+		glBindBuffer(GL_ARRAY_BUFFER,VBO_array[i]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_array[i]), vertices_array[i], GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+	}
 	// This is our rendering loop.
 	while (!glfwWindowShouldClose(window)) {
 		processInput(window, GLFW_KEY_ENTER);
 		glClearColor(0.3f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glUseProgram(shaderProgram);
-		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices)/sizeof(float));
+		for (unsigned int i = 0; i < 2; ++i) {
+			glUseProgram(shaderPrograms[i]);
+			glBindVertexArray(VAO_array[i]);
+			glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices_array[i]) / sizeof(float));
+		}
 
 		// --------- END OF RENDERING PROCESS ---------
 		// This switches the current color buffer with a new one. Presumably,
@@ -125,9 +158,11 @@ int main()
 		// This catches events, such as the window resizing callback.
 		glfwPollEvents();
 	}
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteProgram(shaderProgram);
+	glDeleteVertexArrays(2, VAO_array);
+	glDeleteBuffers(2, VBO_array);
+	for (unsigned int i = 0; i < 2; i++) {
+		glDeleteProgram(shaderPrograms[i]);
+	}
 	glfwTerminate();
 	return 0;
 }
