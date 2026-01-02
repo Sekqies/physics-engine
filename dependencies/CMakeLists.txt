@@ -20,8 +20,17 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(glm)
 
 add_library(glad STATIC 
-    glad/src/glad.c
+    glad/src/glad.c)
+add_library(learnopengl
+    "learnopengl/src/shader.cpp"
+    "learnopengl/include/shader/shader.h"
+    "learnopengl/include/stb_image/stb_image.h" 
+    "learnopengl/src/stb_image.cpp")
+target_include_directories(glad PUBLIC 
+    glad/include 
 )
 target_include_directories(glad PUBLIC glad/include)
+target_include_directories(learnopengl PUBLIC learnopengl/include)
+target_link_libraries(learnopengl PUBLIC glad)
 
 find_package(OpenGL REQUIRED)
