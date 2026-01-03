@@ -78,6 +78,7 @@ Use references over pointers whenever possible. If you require pointers for poin
 3. Raw pointers (e.g `const double maximum_element(const double* ar)`)
 Note that passing a unique_ptr by value transfers ownership. Passing unique_ptr by reference temporarily borrows it, as instended for function with no side effects.
 
+
 ## Using namespaces
 Do not add `using namespace std` on a global scope of a file. If you find cumbersome to use, for instance `std::cout` in your files, you may add a `using` declaration with the members of the `std` library you wish, likewise:
 ```c++

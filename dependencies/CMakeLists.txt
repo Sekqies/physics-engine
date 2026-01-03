@@ -21,16 +21,19 @@ FetchContent_MakeAvailable(glm)
 
 add_library(glad STATIC 
     glad/src/glad.c)
+
+
 add_library(learnopengl
     "learnopengl/src/shader.cpp"
     "learnopengl/include/shader/shader.h"
     "learnopengl/include/stb_image/stb_image.h" 
-    "learnopengl/src/stb_image.cpp")
-target_include_directories(glad PUBLIC 
-    glad/include 
-)
+    "learnopengl/src/stb_image.cpp" "learnopengl/include/camera/camera.h" "learnopengl/include/VAO/VAO.h" "learnopengl/include/VBO/VBO.h" "learnopengl/src/VAO.cpp" "learnopengl/src/VBO.cpp" "learnopengl/include/texture/texture.h" "learnopengl/src/texture.cpp")
+
 target_include_directories(glad PUBLIC glad/include)
 target_include_directories(learnopengl PUBLIC learnopengl/include)
-target_link_libraries(learnopengl PUBLIC glad)
+target_link_libraries(learnopengl PUBLIC 
+    glad
+    glm::glm)
 
 find_package(OpenGL REQUIRED)
+target_link_libraries(learnopengl PUBLIC OpenGL::GL)
