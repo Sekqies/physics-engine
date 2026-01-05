@@ -1,4 +1,4 @@
-﻿
+﻿/*
 #include <glad/glad.h>
 #include <shader/shader.h>
 #include <glm/glm.hpp>
@@ -253,4 +253,4 @@ int main()
 	glDeleteBuffers(1, &VBO);
 	glfwTerminate();
 	return 0;
-}
+}*/
