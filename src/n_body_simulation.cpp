@@ -297,7 +297,6 @@ int main()
 			model *= glm::mat4_cast(bodies[i].orientation_quat);
 			const vec3 com = bodies[i].center_of_mass.position;
 			const quat q = bodies[i].orientation_quat;
-			printf("%.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f \n", com.x, com.y, com.z, bodies[i].center_of_mass.mass, q.x, q.y, q.z, q.w);
 			shader_program.setMat4("model", model);
 			shader_program.setMat4("view", view);
 			shader_program.setMat4("projection", projection);
