@@ -54,7 +54,7 @@ public:
 
 	vector<vec3> vertices;
 	RigidBody(const float density, const vector<vec3>& vertices,
-		const quat orientation_quat = quat(0.0f, 0.0f, 0.0f, 0.0f),
+		const quat orientation_quat = quat(1.0f, 0.0f, 0.0f, 0.0f),
 		const vec3 linear_momentum = vec3(0.0f, 0.0f, 0.0f),
 		const vec3 angular_momentum = vec3(0.0f, 0.0f, 0.0f)) {
 		this->density = density;
@@ -69,6 +69,12 @@ public:
 
 		this->compute_center_of_mass();
 		this->compute_inertia_tensor();
+
+		// initialize auxiliary variables to 0
+		angular_velocity = vec3(0.0f);
+		velocity = vec3(0.0f);
+		this->center_of_mass.force = vec3(0.0f);
+		torque = vec3(0.0f);
 	}
 	/// <summary>
 	/// Updates the state of the rigid body. Variables considered as "state" are
@@ -109,12 +115,17 @@ private:
 	/// <summary>
 	/// Determines que center of mass in local coordinates.
 	/// </summary>
+/// <summary>
+	/// Determines que center of mass in local coordinates and shifts vertices to match
+	/// </summary>
 	void compute_center_of_mass() {
 		float total_volume = 0.0f;
 		float signed_volume = 0.0f;
 		vec3 centroid = vec3(0.0f);
+		vec3 com_accumulator = vec3(0.0f);
 		const unsigned int n = vertices.size();
 		const vec3 origin = vertices[0];
+
 		for (unsigned int i = 0; i < n; i += 3) {
 			const vec3 a = vertices[i];
 			const vec3 b = vertices[i + 1];
@@ -122,11 +133,18 @@ private:
 			signed_volume = 0.16666f * glm::determinant(mat3(a - origin, b - origin, c - origin));
 			centroid = (origin + a + b + c) * 0.25f;
 			total_volume += signed_volume;
-			center_of_mass.position += centroid * signed_volume;
+			com_accumulator += centroid * signed_volume;
 		}
-		volume = total_volume;
-		center_of_mass.position /= total_volume;
-		center_of_mass.mass = total_volume * density;
+
+		this->volume = total_volume;
+		this->center_of_mass.mass = total_volume * density;
+
+		vec3 com_offset = com_accumulator / total_volume;
+		this->center_of_mass.position = com_offset;
+
+		for (auto& v : this->vertices) {
+			v -= com_offset;
+		}
 	}
 	/// <summary>
 	/// Computes the objects's local inertia tensor (I_body) and inverse inertia tensor (I_body^-1)
@@ -144,17 +162,12 @@ private:
 		}
 		const float trace = covariance_matrix[0][0] + covariance_matrix[1][1] + covariance_matrix[2][2];
 		const mat3 inertia_at_origin = density * (trace * mat3(1.0f) - covariance_matrix);
-		const vec3 r = center_of_mass.position;
-		const float r2 = glm::dot(r, r);
-		const mat3 shift = (mat3(r2) - outerProduct(r, r)) * center_of_mass.mass;
-		inertia_tensor = inertia_at_origin - shift;
-		inertia_tensor[0][0] += 0.001f;
-		inertia_tensor[1][1] += 0.001f;
-		inertia_tensor[2][2] += 0.001f;
-		inverse_inertia_tensor = glm::inverse(inertia_tensor);
+
+		this->inertia_tensor = inertia_at_origin;
+		this->inverse_inertia_tensor = glm::inverse(inertia_tensor);
 	}
 };
-constexpr float EPSILON = 0.5f;
+constexpr float EPSILON = 0.005f;
 
 vec3 gravity_torque(const RigidBody& rb, const vec3& r, const float mu) {
 	float dist2 = glm::dot(r, r);
@@ -220,18 +233,16 @@ int main()
 
 
 	starting_conditions.emplace_back(
-		vec3(-3.0f, 0.0f, -1.0f),     
-		vec3(0.0f, 0.4f, 0.0f),       
+		vec3(4.0f, 0.0f, -1.0f),
+		vec3(0.0f, 0.4f, 0.0f),
 		quat(1.0f, 0.0f, 0.0f, 0.0f),
-		vec3(0.1f, 0.0f, 0.0f)        
+		vec3(0.1f, 0.0f, 0.0f)
 	);
-
-	// BODY 1: Right side, moving Down
 	starting_conditions.emplace_back(
-		vec3(10.0f, 0.0f, 0.0f),      
-		vec3(0.0f, -0.4f, 0.0f),     
-		quat(1.0f, 0.0f, 0.0f, 0.0f), 
-		vec3(0.0f, 0.0f, 0.0f)        
+		vec3(5.0f, 0.0f, 0.0f),
+		vec3(0.0f, -0.4f, 0.0f),
+		quat(1.0f, 0.0f, 0.0f, 0.0f),
+		vec3(0.2f, 0.0f, 0.0f)
 	);
 	for (unsigned int i = 0; i < bodies.size(); i++) {
 		auto [position, velocity, rotation_quat, angular_velocity] = starting_conditions[i];
